@@ -21,7 +21,7 @@ function _extends() {
 function useGamepads(callback) {
   var gamepads = useRef([]);
   var requestRef = useRef();
-  var haveEvents = ('ongamepadconnected' in window);
+  var haveEvents = (typeof window !== 'undefined' && 'ongamepadconnected' in window);
 
   var addGamepad = function addGamepad(gamepad) {
     var _extends2;
@@ -47,20 +47,22 @@ function useGamepads(callback) {
 
 
   var scanGamepads = function scanGamepads() {
-    // Grab gamepads from browser API
-    var detectedGamepads = navigator.getGamepads ? navigator.getGamepads() : navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []; // Loop through all detected controllers and add if not already in state
-
-    for (var i = 0; i < detectedGamepads.length; i++) {
-      var newGamepads = detectedGamepads[i];
-      if (newGamepads && newGamepads !== null) addGamepad(newGamepads);
+    if (typeof navigator !== 'undefined') {
+      var detectedGamepads = navigator.getGamepads ? navigator.getGamepads() : navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : [];
+      for (var i = 0; i < detectedGamepads.length; i++) {
+        var newGamepads = detectedGamepads[i];
+        if (newGamepads && newGamepads !== null) addGamepad(newGamepads);
+      }
     }
   }; // Add event listener for gamepad connecting
 
 
   useEffect(function () {
-    window.addEventListener('gamepadconnected', connectGamepadHandler);
-    return window.removeEventListener('gamepadconnected', connectGamepadHandler);
-  }); // Update each gamepad's status on each "tick"
+    if (typeof window !== 'undefined') {
+      window.addEventListener('gamepadconnected', connectGamepadHandler);
+      return () => window.removeEventListener('gamepadconnected', connectGamepadHandler);
+    }
+  }, []); // Update each gamepad's status on each "tick"
 
   var animate = function animate() {
     if (!haveEvents) scanGamepads();
@@ -72,7 +74,7 @@ function useGamepads(callback) {
     return function () {
       return cancelAnimationFrame(requestRef.current);
     };
-  });
+  }, []);
   return gamepads.current;
 }
 
